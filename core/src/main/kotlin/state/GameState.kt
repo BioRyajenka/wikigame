@@ -1,7 +1,6 @@
 package state
 
-import core.state.entity.EntityState
-import core.state.MapState
+import state.entity.EntityState
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}

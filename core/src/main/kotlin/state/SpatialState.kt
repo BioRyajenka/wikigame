@@ -1,8 +1,8 @@
-package core.state
+package state
 
-import core.world.Millis
-import core.world.Position
-import core.world.Speed
+import state.Millis
+import state.Position
+import state.Speed
 
 
 class SpatialState(

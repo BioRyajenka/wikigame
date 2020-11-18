@@ -1,7 +1,4 @@
-package core.state.clientside
-
-import core.state.entity.User
-
+package state.clientside
 
 //open class OtherPlayer(override val id: String, val user: User): Mob()
 

@@ -1,7 +1,6 @@
 package network
 
-object NetworkEntry {
-    suspend operator fun invoke() {
-        println("hi")
-    }
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect object NetworkEntry {
+    suspend operator fun invoke()
 }

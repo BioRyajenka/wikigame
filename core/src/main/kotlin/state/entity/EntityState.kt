@@ -1,7 +1,7 @@
-package core.state.entity
+package state.entity
 
-import core.world.Dimension
-import core.world.Vector
+import state.Dimension
+import state.Vector
 
 // entity is what we can see on the map
 abstract class EntityState : Vector() {

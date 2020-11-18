@@ -1,4 +1,4 @@
-package core.state
+package state
 
 
 class MapState() // TODO

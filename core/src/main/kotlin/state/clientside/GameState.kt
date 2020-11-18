@@ -1,2 +1,2 @@
-package core.state.clientside
+package state.clientside
 

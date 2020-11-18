@@ -1,7 +1,5 @@
-package server
-
 import state.GameState
-import server.network.ClientDeltasMechanism
+//import server.network.ClientDeltasMechanism
 
 /**
  * @author Igor Sushencev
@@ -10,6 +8,6 @@ import server.network.ClientDeltasMechanism
  */
 
 class ServerWorld {
-    val globalGameState: GameState
-    val clients: List<ClientDeltasMechanism>
+//    val globalGameState: GameState
+//    val clients: List<ClientDeltasMechanism>
 }

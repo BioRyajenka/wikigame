@@ -1,13 +1,8 @@
-package core.state.action
+package state.action
 
-import core.state.SpatialState
-import core.state.VariableWithEmptyValue
-import core.state.entity.PlayerState
+import state.*
+import state.entity.PlayerState
 import state.GameState
-import core.world.Millis
-import core.world.Position
-import core.world.Speed
-import core.world.Vector
 import mu.KotlinLogging
 
 /**

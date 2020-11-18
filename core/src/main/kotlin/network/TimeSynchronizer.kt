@@ -1,4 +1,4 @@
-package core.network
+package network
 
 /**
  * @author Igor Sushencev

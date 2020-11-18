@@ -1,7 +1,6 @@
-package core
+import state.Millis
 
-import core.world.Millis
-
-interface TimeProvider {
+object TimeProvider {
     val currentTime: Millis
+        get() = System.currentTimeMillis().toDouble()
 }

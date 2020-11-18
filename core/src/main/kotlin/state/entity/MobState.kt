@@ -1,9 +1,9 @@
-package core.state.entity
+package state.entity
 
-import core.state.action.ActiveUserAction
-import core.state.SpatialState
-import core.state.VariableWithEmptyValue
-import core.world.Millis
+import state.action.ActiveUserAction
+import state.SpatialState
+import state.VariableWithEmptyValue
+import state.Millis
 
 
 /**

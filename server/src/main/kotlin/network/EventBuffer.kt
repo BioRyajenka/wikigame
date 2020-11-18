@@ -1,9 +1,9 @@
-package server.network
+package network
 
-import core.state.action.UserAction
-import core.world.Millis
+import TimeProvider
+import state.Millis
+import state.action.UserAction
 import mu.KotlinLogging
-import server.getServerTime
 
 /**
  * This class holds event buffer. The buffer is needed to smooth out the
@@ -52,7 +52,7 @@ class EventBuffer(private val relaxationPeriod: Millis, private val eventConsume
      * Called every echo.RELAXATION_PERIOD ms
      */
     fun relax() {
-        val relaxationStartTime = getServerTime()
+        val relaxationStartTime = TimeProvider.currentTime
 //        println("relaxing $relaxationStartTime")
 //        return
         // we use internal buffer snapshot because internal buffer object may change

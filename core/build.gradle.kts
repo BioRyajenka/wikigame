@@ -9,7 +9,10 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
+    maven { url = uri("https://plugins.gradle.org/m2/") }
+    google()
 }
 
 //java {
@@ -27,6 +30,9 @@ repositories {
 dependencies {
     api(kotlin("stdlib-jdk8"))
     api("ch.qos.logback:logback-classic:1.2.3")
-    testApi(group = "junit", name = "junit", version = "4.12")
     api("io.github.microutils:kotlin-logging-jvm:2.0.3")
+
+    api("com.whirvis:jraknet:2.12.0")
+
+    testApi(group = "junit", name = "junit", version = "4.12")
 }

@@ -1,4 +1,4 @@
-package core.state
+package state
 
 // item is what is in the inventory
 class Item(val id: String)

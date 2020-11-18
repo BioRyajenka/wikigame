@@ -1,19 +1,14 @@
-package server.network
+package network
 
 import state.GameState
-import core.state.action.UserAction
-import core.world.Millis
 
 /**
  * Store some amount of unacknowledged diffs and current unsended and thus unacknowledged diff.
  * For each diff also cache its serialized version.
  * Also stores one global diff (diff from session's start) for this client
- *
- * @author Igor Sushencev
- * @since 28.01.19
- * Copyright (c) Huawei Technologies Co., Ltd. 2015-2019. All rights reserved.
  */
 
+/*
 private typealias EventId = Int
 
 // TODO: how about remove EMPTY_STATE and treat the whole world's state as first diff?
@@ -46,3 +41,4 @@ class ClientDeltasMechanism(relaxationPeriod: Millis, private val globalState: G
         currentEventIdsList.add(event.actionId)
     }
 }
+*/

@@ -1,17 +1,12 @@
 package server.network.api
 
-import core.state.action.UserAction
-import server.network.ClientDeltasMechanism
+//import server.network.ClientDeltasMechanism
 
 /**
  * Receives events and schedules them to the player states they are corresponded to
- *
- * @author Igor Sushencev
- * @since 28.01.19
- * Copyright (c) Huawei Technologies Co., Ltd. 2015-2019. All rights reserved.
  */
 
-class EventReceiver {
+/*class EventReceiver {
     private val clients: MutableList<ClientDeltasMechanism>
 
     private fun filterAffectedStates(event: UserAction): List<ClientDeltasMechanism> {
@@ -24,3 +19,4 @@ class EventReceiver {
         affectedStates.forEach { it.scheduleEvent(event) }
     }
 }
+*/

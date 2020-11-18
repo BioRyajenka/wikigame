@@ -1,8 +1,10 @@
+import com.soywiz.korio.async.async
 import network.NetworkEntry
 import ui.UIEntry
+import kotlin.coroutines.coroutineContext
 
 
 suspend fun main() {
-    NetworkEntry()
-    UIEntry()
+    async(coroutineContext) { NetworkEntry() }
+//    UIEntry()
 }
