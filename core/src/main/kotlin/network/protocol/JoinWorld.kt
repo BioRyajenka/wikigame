@@ -2,7 +2,7 @@ package network.protocol
 
 import com.whirvis.jraknet.RakNetPacket
 
-class JoinWorldRequest(val requestHi: String) : NetworkEvent(thisParticularEventId) {
+class JoinWorldRequest(val requestHi: String) : NetworkEvent(eventId) {
     companion object : NetworkEventCompanion({ packet ->
         JoinWorldRequest(packet.readString())
     })
@@ -12,7 +12,7 @@ class JoinWorldRequest(val requestHi: String) : NetworkEvent(thisParticularEvent
     }
 }
 
-class JoinWorldResponse(val responseHi: String) : NetworkEvent(thisParticularEventId) {
+class JoinWorldResponse(val responseHi: String) : NetworkEvent(eventId) {
     companion object : NetworkEventCompanion({ packet ->
         JoinWorldResponse(packet.readString())
     })

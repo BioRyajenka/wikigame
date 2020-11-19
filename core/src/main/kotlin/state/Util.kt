@@ -18,6 +18,8 @@ typealias Dimension = Float
 
 typealias Millis = Double
 
+typealias Hertz = Double
+
 /**
  * One dimension per milli
  */

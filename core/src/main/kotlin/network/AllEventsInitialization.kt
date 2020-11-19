@@ -8,7 +8,10 @@ fun initializeNetworkEvents() {
     JoinWorldResponse
 }
 
-/*fun foo() {
+/*
+doesn't work:
+
+fun foo() {
     // api("org.reflections:reflections:0.9.12")
     val packagePath = "core.network.protocol"
     val reflections =

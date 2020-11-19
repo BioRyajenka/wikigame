@@ -33,4 +33,5 @@ data class GameState(
     }
 }
 
-typealias GameStateDiff = GameState // TODO: use it? maybe separate diff & not-diff classes?
+//typealias GameStateDiff = GameState // TODO: use it? maybe separate diff & not-diff classes?
+class GameStateDiff(val gameState: GameState, val fromVersion: Int, val toVersion: Int, val lastUserActionId: Int)

@@ -17,6 +17,8 @@ object NetworkEventManager {
 abstract class NetworkEvent {
     private val packet: RakNetPacket
     private var packetPrepared = false
+    val id: Short
+        get() = packet.id
 
     constructor(id: Short) {
         require(id in RakNetPacket.ID_USER_PACKET_ENUM..255) {
@@ -37,16 +39,16 @@ abstract class NetworkEvent {
         return packet
     }
 
-    abstract fun write(packet: RakNetPacket)
+    protected abstract fun write(packet: RakNetPacket)
 }
 
-private var freeId = RakNetPacket.ID_USER_PACKET_ENUM
+private var freeId: Short = 150 //RakNetPacket.ID_USER_PACKET_ENUM
 
 open class NetworkEventCompanion(read: (RakNetPacket) -> NetworkEvent) {
-    val thisParticularEventId = freeId++
+    val eventId = freeId++
 
     init {
-        NetworkEventManager.registerNewEventType(thisParticularEventId, read)
+        NetworkEventManager.registerNewEventType(eventId, read)
     }
 }
 

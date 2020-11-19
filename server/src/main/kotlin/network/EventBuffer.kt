@@ -49,12 +49,11 @@ class EventBuffer(private val relaxationPeriod: Millis, private val eventConsume
     }
 
     /**
-     * Called every echo.RELAXATION_PERIOD ms
+     * Called every relaxationPeriod ms
      */
     fun relax() {
         val relaxationStartTime = TimeProvider.currentTime
-//        println("relaxing $relaxationStartTime")
-//        return
+
         // we use internal buffer snapshot because internal buffer object may change
         val rightmostApplicableEvent = (0 until buffer.size).indexOfLast { i ->
             val it = buffer[i]
@@ -64,12 +63,10 @@ class EventBuffer(private val relaxationPeriod: Millis, private val eventConsume
         if (rightmostApplicableEvent == -1) return
 
         val oldBuffer = buffer
-//        println("changing buffer: $rightmostApplicableEvent")
         buffer = BufferWithOffset(
             oldBuffer.bufferStartId + rightmostApplicableEvent + 1,
             null
         )
-//        println("buffer changed")
 
         // build nested buffer
         val nestedBuffer = BufferWithOffset(oldBuffer.bufferStartId, null)
@@ -93,13 +90,10 @@ class EventBuffer(private val relaxationPeriod: Millis, private val eventConsume
         }
         buffer.nestedReadOnlyBuffer = nestedBuffer
 
-//        println("$rightmostApplicableEvent ${oldBuffer.bufferStartId}")
-
         // relax
         // rightmostApplicableEvent may be not 100% recent, but it is ok
         (0..rightmostApplicableEvent).forEach { i ->
             val event = oldBuffer[i]
-//            println("event ${oldBuffer.bufferStartId + i} is ${event?.actionId}")
             if (event == null) {
                 logger.warn("Event ${oldBuffer.bufferStartId + i} is lost")
                 println("event ${oldBuffer.bufferStartId + i} проебан")

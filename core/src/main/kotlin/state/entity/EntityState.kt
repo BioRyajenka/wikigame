@@ -4,16 +4,14 @@ import state.Dimension
 import state.Vector
 
 // entity is what we can see on the map
-abstract class EntityState : Vector() {
-    abstract val id: String
-    abstract override var x: Dimension
-    abstract override var y: Dimension
+open class EntityState(open val id: String) : Vector() {
+    // TODO: move spatial state here
 }
 
-class ItemsStackEntity(
+/*class ItemsStackEntity(
     override val id: String,
     override var x: Dimension,
     override var y: Dimension,
     val itemId: String,
     val amount: Int
-) : EntityState()
+) : EntityState()*/
