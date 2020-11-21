@@ -1,4 +1,5 @@
 import com.whirvis.jraknet.peer.RakNetClientPeer
+import com.whirvis.jraknet.protocol.Reliability
 import com.whirvis.jraknet.protocol.message.EncapsulatedPacket
 import com.whirvis.jraknet.protocol.message.acknowledge.Record
 import com.whirvis.jraknet.server.RakNetServer
@@ -22,6 +23,7 @@ class NetworkServer(port: Int, maxConnections: Int) : RakNetServerListener {
     }
 
     fun sendUnreliablyWithAck(peer: RakNetClientPeer, event: NetworkEvent, onAck: () -> Unit) {
+
 //                val packet = diffEvent.preparePacket()
 //                val associatedPacket = server.sendMessage(peer, Reliability.UNRELIABLE_WITH_ACK_RECEIPT, packet)
     }

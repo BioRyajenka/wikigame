@@ -29,13 +29,20 @@ sealed class UserAction {
      * globalState is needed for global state retrieval
      * diff.playerStates also contains player
      *
-     * playerState and globalState should be immutable
+     * TODO: ensure playerState's and globalState's immutability
      */
-    abstract fun apply(playerState: PlayerState, globalState: GameState)
-        : (diffPlayerState: PlayerState, diff: GameState) -> Unit
+    abstract fun getApplication(playerState: PlayerState, globalState: GameState): (diff: GameState) -> Unit
 }
 
-sealed class ActiveUserAction : UserAction()
+/**
+ * Active action is something continuous that cannot exists simultaneously with any other
+ * active action for the player. It can be: moving, chopping down the tree etc.
+ *
+ * onCancelOrFinish fires before switching to another active action and after player disconnects.
+ */
+sealed class ActiveUserAction : UserAction() {
+    abstract fun onCancelOrFinish(playerState: PlayerState, globalState: GameState): (diff: GameState) -> Unit
+}
 
 class CancelActiveAction(
     override val actionId: Int, override var aroseAtTime: Millis,
@@ -65,7 +72,11 @@ class Move(
         }
     }
 
-    override fun apply(playerState: PlayerState, globalState: GameState) = { diffPlayerState: PlayerState, diff: GameState ->
+    весь мув это эктив экшн
+
+    override fun apply(playerState: PlayerState, globalState: GameState) = { diff: GameState ->
+        написать это более эффективно, вынеся бОльшую часть за лямбду
+
         val startPosition = calculateNewPosition(
             playerState.spatialState!!,
             playerState.spatialState!!.speed,

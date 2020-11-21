@@ -3,7 +3,9 @@ package state
 import kotlin.math.sqrt
 
 class VariableWithEmptyValue<T> private constructor(private var value: T? = null) {
-    // null means default value
+    // null means empty value
+
+    fun get(): T? = value
 
     companion object {
         private val EMPTY = VariableWithEmptyValue<Any>(null)

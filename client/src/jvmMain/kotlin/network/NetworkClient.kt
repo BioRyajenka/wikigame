@@ -22,7 +22,7 @@ class NetworkClient : RakNetClientListener {
     }
 
     fun sendReliably(event: NetworkEvent) {
-        client.sendMessage(Reliability.RELIABLE, event.preparePacket())
+        client.sendMessage(Reliability.RELIABLE, event.getPreparedPacket())
     }
 
     suspend inline fun <reified R : NetworkEvent> sendReliablyAndAwait(

@@ -14,4 +14,5 @@ repositories {
 
 dependencies {
     api(project(":core"))
+    compile("com.gitlab.mvysny.konsume-xml:konsume-xml:0.12")
 }

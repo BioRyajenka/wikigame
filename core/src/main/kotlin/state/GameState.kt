@@ -22,16 +22,25 @@ data class GameState(
     val mapState: MapState,
 //    var time: Millis // the time this state describes
 ) {
-    // fun applyDelta(gameStateDelta: GameStateDelta) TODO: this method refers to client package
+    //  TODO: this method should be in client's module
+    /**
+     * Please note that our + is not commutative
+     */
+//    operator fun plusAssign(diff: GameStateDiff) {
+//
+//    }
 
-    // TODO: add tests
-    fun subtractDiff(rhs: GameState) {
-//        playerState.subtractDiff(rhs.playerState)
-//         TODO: other things like:
-//        otherPlayerStates...
-//        groundEntities
+    //  TODO: this method should be in server's module
+    /**
+     * Subtracts diff from this
+     *
+     * if there are a+b, then (a+b)-a should be b
+     * + is apply, - is subtract
+     */
+    operator fun minusAssign(diff: GameStateDiff) {
+
     }
 }
 
-//typealias GameStateDiff = GameState // TODO: use it? maybe separate diff & not-diff classes?
-class GameStateDiff(val gameState: GameState, val fromVersion: Int, val toVersion: Int, val lastUserActionId: Int)
+typealias GameStateDiff = GameState // TODO: use it? maybe separate diff & not-diff classes?
+//class GameStateDiff(val gameState: GameState, val fromVersion: Int, val toVersion: Int, val lastUserActionId: Int)

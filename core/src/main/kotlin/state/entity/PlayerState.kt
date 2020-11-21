@@ -1,17 +1,18 @@
 package state.entity
 
+import state.Position
 import state.action.ActiveUserAction
-import state.SpatialState
 import state.VariableWithEmptyValue
 import state.Speed
 
-data class PersonalInfo(val movementSpeed: Speed, val choppingTreesSpeed: Speed)
+data class PersonalInfo(val movementSpeed: Speed)//, val choppingTreesSpeed: Speed)
 data class User(val id: String, val name: String)
 
 class PlayerState(
-    spatialState: SpatialState?,
+    id: String,
+    position: Position?,
     activeAction: VariableWithEmptyValue<ActiveUserAction>?,
-    speechState: SpeechState?,
+    speechState: VariableWithEmptyValue<SpeechState>?,
 
 //    val inventory: InventoryState,
 //    val tradeState: TradeState,
@@ -20,7 +21,8 @@ class PlayerState(
     val personalInfo: PersonalInfo,
     val publicInfo: User,
 ) : MobState(
-    spatialState,
+    id,
+    position,
     activeAction,
     speechState,
 ) {

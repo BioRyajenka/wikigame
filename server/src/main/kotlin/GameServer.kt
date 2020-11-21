@@ -1,22 +1,24 @@
+import com.gitlab.mvysny.konsumexml.getValueInt
+import com.gitlab.mvysny.konsumexml.konsumeXml
 import com.whirvis.jraknet.RakNet
 import com.whirvis.jraknet.RakNetPacket
 import com.whirvis.jraknet.peer.RakNetClientPeer
 import com.whirvis.jraknet.protocol.Reliability
 import com.whirvis.jraknet.server.RakNetServer
 import com.whirvis.jraknet.server.RakNetServerListener
-import network.ClientDeltasMechanism
-import network.EventBuffer
+import network.ClientDiffsMechanism
 import network.protocol.GameStateDiffEvent
 import network.protocol.JoinWorldRequest
 import network.protocol.JoinWorldResponse
 import network.protocol.NetworkEventManager
-import state.GameState
-import state.Hertz
-import state.MapState
-import state.Millis
+import state.*
 import state.action.UserAction
 import state.entity.EntityState
+import state.entity.PersonalInfo
+import state.entity.PlayerState
+import state.entity.User
 import java.net.InetSocketAddress
+import kotlin.properties.Delegates
 
 /**
 ) дифы могут реализовывать операцию +
@@ -35,27 +37,83 @@ import java.net.InetSocketAddress
 (непонятно что быстрее)
 
 вариантов реализации много, сейчас был выбран такой:
- - идемпотентные ("декларативные") дифы
- - без EventBuffer
- - клиент кидает UNRELIABLE_ORDERED
- - сервер кидает UNRELIABLE_SEQUENCED_WITH_ACK
- - ПЕРЕД вычислением дифа происходит "сужение" всего стейта до видимости клиента (но это можно в TODO)
+- идемпотентные ("декларативные") дифы
+- без EventBuffer
+- клиент кидает UNRELIABLE_ORDERED
+- сервер кидает UNRELIABLE_WITH_ACK
+- ПЕРЕД вычислением дифа происходит "сужение" всего стейта до видимости клиента (но это можно в TODO)
+
+Diff это отдельная сущность или та же? Предпочтительно та же
  */
+
+private fun createInitialGameState(): GameState {
+    var width: Int
+    var height: Int
+    var tileWidth by Delegates.notNull<Int>()
+    var tileHeight by Delegates.notNull<Int>()
+
+    val layers = mutableListOf<Map<IntPosition, Int>>()
+
+    GameServer::class.java.getResource("map.tmx").readText().konsumeXml().apply {
+        child("map") {
+            width = attributes.getValueInt("width")
+            height = attributes.getValueInt("height")
+            tileWidth = attributes.getValueInt("tilewidth")
+            tileHeight = attributes.getValueInt("tileheight")
+            val layersNum = attributes.getValueInt("nextlayerid")
+
+            repeat(layersNum) { layers.add(mutableMapOf()) }
+
+            children("layer") {
+                val layerId = attributes.getValueInt("id")
+                val layerStringData = childText("data")
+                println(1 == 1)
+            }
+        }
+    }
+
+    val mapState = MapState(layers.first().keys.associateWith { cellPos ->
+        MapCell(layers.map { it.getValue(cellPos) })
+    })
+
+    val playersPos = listOf(
+        IntPosition(5, 5),
+        IntPosition(5, 15)
+    )
+    val entities = mutableListOf<EntityState>()
+    entities += playersPos.mapIndexed { i, playerPos ->
+        val playerId = "player$i"
+        val playerName = "Player $i"
+
+        PlayerState(
+            playerId,
+            Position(1f * playerPos.j * tileWidth, 1f * playerPos.i * tileHeight),
+            VariableWithEmptyValue.empty(),
+            VariableWithEmptyValue.empty(),
+            PersonalInfo(3f),
+            User(playerId, playerName)
+        )
+    }
+
+    return GameState(entities.associateBy { it.id }, mapState)
+}
+
+private fun constrictGameState(gameState: GameState, playerId: String): GameState {
+    return gameState // TODO
+}
+
+private fun filterAffectedPlayers(event: UserAction, players: Collection<Player>): Collection<Player> {
+    // FIXME: 21.11.2020 it is temporary function. in future it will be implemented more efficiently
+    return players // TODO
+}
 
 class GameServer(
     private val server: NetworkServer,
     updateFrequency: Hertz
 ) : RakNetServerListener {
     private val updatePeriod: Millis = 1000 / updateFrequency
-    private val clients = mutableMapOf<RakNetClientPeer, Client>()
-    private val globalGameState: GameState = createGameState()
-
-    private fun createGameState(): GameState {
-        val entities = mutableListOf<EntityState>()
-        val mapState = MapState()
-
-        return GameState(entities.associateBy { it.id }, mapState)
-    }
+    private val players = mutableMapOf<RakNetClientPeer, Player>()
+    private val globalGameState: GameState = createInitialGameState()
 
 
     fun start() {
@@ -69,45 +127,56 @@ class GameServer(
     }
 
     private fun update() {
-        clients.forEach { (peer, client) ->
-            val deltaToSend = client.deltasMechanism.retrieveDeltaToSend()
-            if (deltaToSend != null) {
-                val diffEvent = GameStateDiffEvent(deltaToSend)
+        players.forEach { (peer, client) ->
+            client.diffsMechanism.retrieveDiffToSend()?.let { (diffToSend, diffId) ->
+                val diffEvent = GameStateDiffEvent(diffToSend, diffId)
 
                 server.sendUnreliablyWithAck(peer, diffEvent) {
-                    client.deltasMechanism.deltaAcknowledged(diffEvent.id)
+                    client.diffsMechanism.diffAcknowledged(diffId)
                 }
-
             }
         }
     }
 
     override fun onDisconnect(server: RakNetServer, address: InetSocketAddress, peer: RakNetClientPeer, reason: String) {
-        println("Client disconnected! Clients before: ${clients.size}")
-        clients.remove(peer)
-        println("Clients after: ${clients.size}")
+        val player = players.remove(peer)!!
+
+        println("Client ${player.id} disconnected!")
+
+        val playerState = globalGameState.entities.getValue(player.id) as PlayerState
+        val application =
+            playerState.activeAction!!.get()?.onCancelOrFinish(playerState, globalGameState)
+        application?.invoke(globalGameState)
     }
 
     override fun handleMessage(server: RakNetServer, peer: RakNetClientPeer, packet: RakNetPacket, channel: Int) {
         val event = NetworkEventManager.resolveEvent(packet) ?: error("Unknown event")
 
         if (event.id == JoinWorldRequest.eventId) {
-            println("Client said ${(event as JoinWorldRequest).requestHi}")
+            println("Player ${(event as JoinWorldRequest).playerId} connected")
 
-            val deltasMechanism = ClientDeltasMechanism(globalGameState)
-            val eventBuffer = EventBuffer(updatePeriod, deltasMechanism::apply)
-            clients[peer] = Client(eventBuffer, deltasMechanism)
+            val diffsMechanism = ClientDiffsMechanism(globalGameState)
+            players[peer] = Player(event.playerId, diffsMechanism)
 
-            val response = JoinWorldResponse("hi there")
-            peer.sendMessage(Reliability.RELIABLE, response.preparePacket())
+            val constrictedGameState = constrictGameState(globalGameState, event.playerId)
+            val response = JoinWorldResponse(constrictedGameState)
+            peer.sendMessage(Reliability.RELIABLE, response.getPreparedPacket())
 
             return
         }
 
-        val client = clients[peer] ?: error("Message from client who didn't join the world")
+        val player = players[peer] ?: error("Message from player who didn't join the world")
 
         if (event is UserAction) {
-            client.eventBuffer.scheduleEvent(event)
+            // TODO: align event.aroseAtTime to server time
+
+            val playerState = globalGameState.entities.getValue(player.id) as PlayerState
+            val application = event.getApplication(playerState, globalGameState)
+            val affectedPlayerState = filterAffectedPlayers(event, players.values)
+
+            application.invoke(globalGameState)
+            affectedPlayerState.forEach { it.diffsMechanism.apply(application) }
+
             return
         }
 
@@ -115,4 +184,4 @@ class GameServer(
     }
 }
 
-class Client(val eventBuffer: EventBuffer, val deltasMechanism: ClientDeltasMechanism)
+class Player(val id: String, val diffsMechanism: ClientDiffsMechanism)

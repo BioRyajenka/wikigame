@@ -15,10 +15,11 @@ object NetworkEventManager {
 }
 
 abstract class NetworkEvent {
-    private val packet: RakNetPacket
-    private var packetPrepared = false
     val id: Short
         get() = packet.id
+
+    private val packet: RakNetPacket
+    private var packetPrepared = false
 
     constructor(id: Short) {
         require(id in RakNetPacket.ID_USER_PACKET_ENUM..255) {
@@ -32,8 +33,8 @@ abstract class NetworkEvent {
         this.packet = packet
     }
 
-    fun preparePacket(): RakNetPacket {
-        check(!packetPrepared)
+    fun getPreparedPacket(): RakNetPacket {
+        if (packetPrepared) return packet;
         write(packet)
         packetPrepared = true
         return packet

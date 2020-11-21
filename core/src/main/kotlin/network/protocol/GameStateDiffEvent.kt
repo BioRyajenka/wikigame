@@ -2,6 +2,7 @@ package network.protocol
 
 import com.whirvis.jraknet.RakNetPacket
 import state.GameState
+import state.GameStateDiff
 import state.MapState
 import state.entity.EntityState
 
@@ -26,7 +27,7 @@ private fun readMapState(packet: RakNetPacket) : MapState {
     return MapState()
 }
 
-class GameStateDiffEvent(val diff: GameState) : NetworkEvent(eventId) {
+class GameStateDiffEvent(val diff: GameStateDiff, val diffId: Int) : NetworkEvent(eventId) {
 
     companion object : NetworkEventCompanion({ packet ->
         val diff = GameState(

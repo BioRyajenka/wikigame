@@ -1,8 +1,9 @@
 package network.protocol
 
 import com.whirvis.jraknet.RakNetPacket
+import state.GameState
 
-class JoinWorldRequest(val requestHi: String) : NetworkEvent(eventId) {
+class JoinWorldRequest(val playerId: String) : NetworkEvent(eventId) {
     companion object : NetworkEventCompanion({ packet ->
         JoinWorldRequest(packet.readString())
     })
@@ -12,7 +13,7 @@ class JoinWorldRequest(val requestHi: String) : NetworkEvent(eventId) {
     }
 }
 
-class JoinWorldResponse(val responseHi: String) : NetworkEvent(eventId) {
+class JoinWorldResponse(val initialGameState: GameState) : NetworkEvent(eventId) {
     companion object : NetworkEventCompanion({ packet ->
         JoinWorldResponse(packet.readString())
     })
