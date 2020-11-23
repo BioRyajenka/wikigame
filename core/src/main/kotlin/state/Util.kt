@@ -1,11 +1,15 @@
 package state
 
+import generation.TransferableViaNetwork
 import kotlin.math.sqrt
 
-class VariableWithEmptyValue<T> private constructor(private var value: T? = null) {
+//@TransferableViaNetwork
+class VariableWithEmptyValue<out T> private constructor(private var value: T? = null) {
     // null means empty value
 
-    fun get(): T? = value
+    fun getValue(): T? = value
+
+    fun empty() = value == null
 
     companion object {
         private val EMPTY = VariableWithEmptyValue<Any>(null)
@@ -29,6 +33,7 @@ typealias Speed = Float
 
 typealias Position = Vector
 
+@TransferableViaNetwork
 open class Vector(open var x: Dimension, open var y: Dimension) {
     constructor() : this(0f, 0f)
 
@@ -56,6 +61,7 @@ open class Vector(open var x: Dimension, open var y: Dimension) {
     fun vectorLength(): Float = sqrt(x * x + y * y)
 }
 
+@TransferableViaNetwork
 data class IntPosition(val i: Int, val j: Int)
 
 data class IntSize(val width: Int, val height: Int)

@@ -1,18 +1,24 @@
 package state.entity
 
+import generation.StateDef
+import generation.TransferableViaNetwork
 import state.Position
 import state.action.ActiveUserAction
 import state.VariableWithEmptyValue
 import state.Speed
 
+@TransferableViaNetwork
 data class PersonalInfo(val movementSpeed: Speed)//, val choppingTreesSpeed: Speed)
+
+@TransferableViaNetwork
 data class User(val id: String, val name: String)
 
-class PlayerState(
+@StateDef
+class PlayerStateDef(
     id: String,
-    position: Position?,
-    activeAction: VariableWithEmptyValue<ActiveUserAction>?,
-    speechState: VariableWithEmptyValue<SpeechState>?,
+    position: Position,
+    activeAction: VariableWithEmptyValue<ActiveUserAction>,
+    speechState: VariableWithEmptyValue<SpeechState>,
 
 //    val inventory: InventoryState,
 //    val tradeState: TradeState,
@@ -20,19 +26,9 @@ class PlayerState(
 
     val personalInfo: PersonalInfo,
     val publicInfo: User,
-) : MobState(
+) : MobStateDef(
     id,
     position,
     activeAction,
     speechState,
-) {
-    override fun subtractDiff(rhs: PlayerState) {
-//        if (tradeWithPlayerId == rhs.tradeWithPlayerId) {
-//            tradeState.subtractDiff(rhs.tradeState);
-//        } // else just accept our version
-//
-//        inventory.subtractDiff(rhs.inventory)
-//
-//        super.subtractDiff(rhs)
-    }
-}
+)

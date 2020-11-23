@@ -1,12 +1,13 @@
 package state.entity
 
+import generation.StateDef
 import state.Dimension
+import state.Position
 import state.Vector
 
 // entity is what we can see on the map
-open class EntityState(open val id: String) : Vector() {
-    // TODO: move spatial state here
-}
+@StateDef
+open class EntityStateDef(val id: String, val position: Position)
 
 /*class ItemsStackEntity(
     override val id: String,

@@ -1,10 +1,14 @@
 package state
 
+import generation.StateDef
+import generation.TransferableViaNetwork
 
-class MapState(
+@StateDef
+class MapStateDef(
     val field: Map<IntPosition, MapCell>
 )
 
+@TransferableViaNetwork
 class MapCell(
     val tileTypeByLayer: List<Int>,
 )

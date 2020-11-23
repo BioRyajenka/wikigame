@@ -1,7 +1,6 @@
 package network.protocol
 
 import com.whirvis.jraknet.RakNetPacket
-import state.GameState
 
 class JoinWorldRequest(val playerId: String) : NetworkEvent(eventId) {
     companion object : NetworkEventCompanion({ packet ->
@@ -9,16 +8,17 @@ class JoinWorldRequest(val playerId: String) : NetworkEvent(eventId) {
     })
 
     override fun write(packet: RakNetPacket) {
-        packet.writeString(requestHi)
+//        packet.writeString(requestHi)
     }
 }
 
-class JoinWorldResponse(val initialGameState: GameState) : NetworkEvent(eventId) {
+class JoinWorldResponse(/*val initialGameState: GameState*/) : NetworkEvent(eventId) {
     companion object : NetworkEventCompanion({ packet ->
-        JoinWorldResponse(packet.readString())
+//        JoinWorldResponse(packet.readString())
+        TODO()
     })
 
     override fun write(packet: RakNetPacket) {
-        packet.writeString(responseHi)
+//        packet.writeString(responseHi)
     }
 }

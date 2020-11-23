@@ -1,9 +1,10 @@
 package state.action
 
 import state.*
-import state.entity.PlayerState
-import state.GameState
 import mu.KotlinLogging
+//import state.gen.GameState
+//import state.gen.ImmutableGameState
+//import state.gen.ImmutablePlayerState
 
 /**
  * There are two "domain types" of state: authoritative and cumulative.
@@ -31,7 +32,7 @@ sealed class UserAction {
      *
      * TODO: ensure playerState's and globalState's immutability
      */
-    abstract fun getApplication(playerState: PlayerState, globalState: GameState): (diff: GameState) -> Unit
+//    abstract fun getApplication(playerState: ImmutablePlayerState, globalState: ImmutableGameState): (diff: GameStateDiff) -> Unit
 }
 
 /**
@@ -41,15 +42,15 @@ sealed class UserAction {
  * onCancelOrFinish fires before switching to another active action and after player disconnects.
  */
 sealed class ActiveUserAction : UserAction() {
-    abstract fun onCancelOrFinish(playerState: PlayerState, globalState: GameState): (diff: GameState) -> Unit
+//    abstract fun onCancelOrFinish(playerState: ImmutablePlayerState, globalState: ImmutableGameState): (diff: GameStateDiff) -> Unit
 }
-
+/*
 class CancelActiveAction(
     override val actionId: Int, override var aroseAtTime: Millis,
     private val endPosition: Position
 ) : ActiveUserAction() {
-    override fun apply(playerState: PlayerState, globalState: GameState) = { diffPlayerState: PlayerState, diff: GameState ->
-        diffPlayerState.activeAction = VariableWithEmptyValue.empty()
+    override fun getApplication(playerState: PlayerState, globalState: GameState) = { diff: GameState ->
+        diff.activeAction = VariableWithEmptyValue.empty()
     }
 
 }
@@ -91,7 +92,7 @@ class Move(
 
         diffPlayerState.spatialState = newSpatialState
     }
-}
+}*/
 
 /*class DropInventoryItem(
     override val actionId: Int, override var aroseAtTime: Millis,

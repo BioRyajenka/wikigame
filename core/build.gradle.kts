@@ -34,5 +34,9 @@ dependencies {
 
     api("com.whirvis:jraknet:2.12.0")
 
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("com.squareup:kotlinpoet:1.7.2")
+    implementation("org.reflections:reflections:0.9.12")
+
     testApi(group = "junit", name = "junit", version = "4.12")
 }

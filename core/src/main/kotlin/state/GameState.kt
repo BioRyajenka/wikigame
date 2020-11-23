@@ -1,7 +1,8 @@
 package state
 
-import state.entity.EntityState
+import generation.StateDef
 import mu.KotlinLogging
+import state.entity.EntityStateDef
 
 private val logger = KotlinLogging.logger {}
 
@@ -17,30 +18,9 @@ private val logger = KotlinLogging.logger {}
 // todo: server can use haffman compression to send deltas?
 // todo: make immutable version for each mutable state (e.g. interface ImmutableGameState {val mobStates...}
 //       maybe autogenerate
-data class GameState(
-    val entities: Map<String, EntityState>, // id is a key
-    val mapState: MapState,
+@StateDef
+data class GameStateDef(
+    val entities: Map<String, EntityStateDef>, // id is a key
+    val mapState: MapStateDef,
 //    var time: Millis // the time this state describes
-) {
-    //  TODO: this method should be in client's module
-    /**
-     * Please note that our + is not commutative
-     */
-//    operator fun plusAssign(diff: GameStateDiff) {
-//
-//    }
-
-    //  TODO: this method should be in server's module
-    /**
-     * Subtracts diff from this
-     *
-     * if there are a+b, then (a+b)-a should be b
-     * + is apply, - is subtract
-     */
-    operator fun minusAssign(diff: GameStateDiff) {
-
-    }
-}
-
-typealias GameStateDiff = GameState // TODO: use it? maybe separate diff & not-diff classes?
-//class GameStateDiff(val gameState: GameState, val fromVersion: Int, val toVersion: Int, val lastUserActionId: Int)
+)
