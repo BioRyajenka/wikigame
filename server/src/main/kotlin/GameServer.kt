@@ -13,10 +13,12 @@ import network.protocol.JoinWorldResponse
 import network.protocol.NetworkEventManager
 import state.*
 import state.action.UserAction
-import state.entity.EntityState
 import state.entity.PersonalInfo
-import state.entity.PlayerState
 import state.entity.User
+import state.gen.EntityState
+import state.gen.GameState
+import state.gen.MapState
+import state.gen.PlayerState
 import java.net.InetSocketAddress
 import kotlin.properties.Delegates
 
@@ -74,7 +76,7 @@ private fun createInitialGameState(): GameState {
 
     val mapState = MapState(layers.first().keys.associateWith { cellPos ->
         MapCell(layers.map { it.getValue(cellPos) })
-    })
+    }.toMutableMap())
 
     val playersPos = listOf(
         IntPosition(5, 5),
@@ -82,8 +84,8 @@ private fun createInitialGameState(): GameState {
     )
     val entities = mutableListOf<EntityState>()
     entities += playersPos.mapIndexed { i, playerPos ->
-        val playerId = "player$i"
-        val playerName = "Player $i"
+        val playerId = "player${i + 1}"
+        val playerName = "Player ${i + 1}"
 
         PlayerState(
             playerId,
@@ -95,7 +97,7 @@ private fun createInitialGameState(): GameState {
         )
     }
 
-    return GameState(entities.associateBy { it.id }, mapState)
+    return GameState(entities.associateBy { it.id }.toMutableMap(), mapState)
 }
 
 private fun constrictGameState(gameState: GameState, playerId: String): GameState {
@@ -145,7 +147,7 @@ class GameServer(
 
         val playerState = globalGameState.entities.getValue(player.id) as PlayerState
         val application =
-            playerState.activeAction!!.get()?.onCancelOrFinish(playerState, globalGameState)
+            playerState.activeAction!!.getValue()?.onCancelOrFinish(playerState, globalGameState)
         application?.invoke(globalGameState)
     }
 

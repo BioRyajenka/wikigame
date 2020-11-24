@@ -2,23 +2,9 @@ package state.action
 
 import state.*
 import mu.KotlinLogging
-//import state.gen.GameState
-//import state.gen.ImmutableGameState
-//import state.gen.ImmutablePlayerState
-
-/**
- * There are two "domain types" of state: authoritative and cumulative.
- * The first mean that new value affected by event doesn't depend on the previous value.
- * The second mean that there are some (? commutative) operation on the domain it is performed on
- *
- * TODO: extract these two types (domains)
- * Maybe make events applicable only for selected domains? Not for the whole state
- */
+import state.gen.*
 
 private val logger = KotlinLogging.logger {}
-
-// All of these actions currently imply that input is correct.
-// TODO: add validation (as a separate class or method)
 
 sealed class UserAction {
     abstract val actionId: Int // incrementing id. todo: make it autoincrement
@@ -30,9 +16,36 @@ sealed class UserAction {
      * globalState is needed for global state retrieval
      * diff.playerStates also contains player
      *
-     * TODO: ensure playerState's and globalState's immutability
      */
-//    abstract fun getApplication(playerState: ImmutablePlayerState, globalState: ImmutableGameState): (diff: GameStateDiff) -> Unit
+    fun getApplication(playerId: String, globalState: ImmutableGameState) = { diff: GameStateDiff ->
+        val o = object: ApplicationHelper {
+            override val diffPlayer by lazy {
+                diff.entities.computeIfAbsent(player.id) { EntityStateDiff(player.id, null) }!! as PlayerStateDiff
+            }
+        }
+
+        /**
+         * Возможны 2 варианта реализации сетевого протокола, я выбрал второй
+         * 1) как в quake: для каждого клиента храним n версий всего мира, которые
+         *    используются в ClientDiffsMechanism. При этом Action применяется один
+         *    раз ко всему миру, а сужение и создание дифа происходят перед отправкой
+         * 2) храним именно отправленные дифы. При этом Action возвращает сразу Diff
+         *    (или модифицирующую дифф функцию, что одно и то же), и в качестве параметра
+         *    принимает global immutable. Тогда сужение происходит прямо в функции
+         *    применения UserAction. Сейчас я реализую с явными проверками в коде, но
+         *    в идеале надо рассматривать все поля стейт-дифа как ресурсы и предоставлять
+         *    или не предоставлять к ним доступ. Т.е. если нет доступа, то дифф не меняем
+         */
+
+        with(o, getApplication())
+//        kek()(o)
+    }
+
+    interface ApplicationHelper {
+        val diffPlayer: PlayerStateDiff
+    }
+
+    abstract fun getApplication(): ApplicationHelper.() -> Unit
 }
 
 /**
@@ -42,17 +55,23 @@ sealed class UserAction {
  * onCancelOrFinish fires before switching to another active action and after player disconnects.
  */
 sealed class ActiveUserAction : UserAction() {
-//    abstract fun onCancelOrFinish(playerState: ImmutablePlayerState, globalState: ImmutableGameState): (diff: GameStateDiff) -> Unit
-}
-/*
-class CancelActiveAction(
-    override val actionId: Int, override var aroseAtTime: Millis,
-    private val endPosition: Position
-) : ActiveUserAction() {
-    override fun getApplication(playerState: PlayerState, globalState: GameState) = { diff: GameState ->
-        diff.activeAction = VariableWithEmptyValue.empty()
+    override fun getApplication(): ApplicationHelper.() -> Unit = {
+
     }
 
+    abstract fun onCancelOrFinish(): ApplicationHelper.() -> Unit
+}
+
+class CancelActiveAction(
+    override val actionId: Int, override var aroseAtTime: Millis
+) : ActiveUserAction() {
+    override fun getApplication(): ApplicationHelper.() -> Unit = {
+        diffPlayer.activeAction = VariableWithEmptyValue.empty()
+    }
+
+    override fun onCancelOrFinish(player: ImmutablePlayerState, globalState: ImmutableGameState) = { _ : GameStateDiff ->
+        // do nothing
+    }
 }
 
 // authoritative action
@@ -92,7 +111,7 @@ class Move(
 
         diffPlayerState.spatialState = newSpatialState
     }
-}*/
+}
 
 /*class DropInventoryItem(
     override val actionId: Int, override var aroseAtTime: Millis,

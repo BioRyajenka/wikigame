@@ -1,21 +1,20 @@
 package network.protocol
 
 import com.whirvis.jraknet.RakNetPacket
-import state.*
+import state.gen.GameStateDiff
+import state.gen.readGameStateDiff
+import state.gen.writeGameStateDiff
 
-/*class GameStateDiffEvent(val diff: GameStateDiff, val diffId: Int) : NetworkEvent(eventId) {
+class GameStateDiffEvent(val diff: GameStateDiff, val diffId: Int) : NetworkEvent(eventId) {
 
     companion object : NetworkEventCompanion({ packet ->
-        val diff = GameState(
-            readEntities(packet).associateBy { it.id },
-            readMapState(packet)
-        )
-//        GameStateDiffEvent(diff)
-        TODO()
+        val diff = readGameStateDiff(packet)
+        val diffId = packet.readInt()
+        GameStateDiffEvent(diff, diffId)
     })
 
     override fun write(packet: RakNetPacket) {
-        writeEntities(packet, diff.entities.values)
-//        writeMapState(packet, diff.mapState)
+        writeGameStateDiff(diff, packet)
+        packet.writeInt(diffId)
     }
-}*/
+}

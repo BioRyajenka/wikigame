@@ -4,6 +4,20 @@ import generation.TransferableViaNetwork
 import kotlin.math.sqrt
 
 //@TransferableViaNetwork
+/**
+ * in diff:
+if (diff.speechState != null) {
+    val value = speechState.getValue()
+    val diffValue = diff.speechState!!.getValue()
+
+    when {
+        diffValue == null -> speechState = VariableWithEmptyValue.empty()
+        value == null -> speechState = VariableWithEmptyValue.ofValue(diffValue)
+        else -> value.plusAssign(diffValue)
+    }
+}
+ */
+
 class VariableWithEmptyValue<out T> private constructor(private var value: T? = null) {
     // null means empty value
 
