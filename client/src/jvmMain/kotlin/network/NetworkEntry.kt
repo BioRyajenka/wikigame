@@ -13,11 +13,12 @@ actual object NetworkEntry {
         client = NetworkClient()
 
         client.connect("localhost", SERVER_PORT)
-        val joinWorldRequest = JoinWorldRequest("request hi")
+
+        val joinWorldRequest = JoinWorldRequest("player1")
         val joinWorldResponse: JoinWorldResponse = client.sendReliablyAndAwait(joinWorldRequest)
 
-        println("received ${joinWorldResponse.responseHi}")
+        GameStateHolder.gameState = joinWorldResponse.initialGameState
 
-//        GameStateHolder.gameState =
+        println("World loaded!")
     }
 }

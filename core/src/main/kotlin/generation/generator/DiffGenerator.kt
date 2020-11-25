@@ -81,7 +81,7 @@ fun generateDiffClass(typeDef: TypeDesc): TypeSpec {
             }
 
             if (typeDef.parent != null) {
-                builder.superclass(diffClassName(typeDef.clazz.superclass))
+                builder.superclass(diffClassName(typeDef.parent!!.clazz))
                 val superConstructorArgs = typeDef.parent!!.constructorArguments
                 builder.addSuperclassConstructorParameter(superConstructorArgs.joinToString { it.name })
             }

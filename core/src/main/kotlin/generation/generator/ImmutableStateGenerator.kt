@@ -44,8 +44,8 @@ fun generateImmutableClass(typeDef: TypeDesc): TypeSpec {
                 }
                 builder.addProperty(field.name, remapType(field.type.asTypeName()))
             }
-            if (typeDef.clazz.superclass != Object::class.java) {
-                builder.addSuperinterface(immutableClassName(typeDef.clazz.superclass))
+            if (typeDef.parent != null) {
+                builder.addSuperinterface(immutableClassName(typeDef.parent!!.clazz))
             }
         }.build()
 }

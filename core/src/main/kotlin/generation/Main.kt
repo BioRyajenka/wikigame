@@ -6,6 +6,7 @@ import generation.generator.generateImmutableClass
 import generation.generator.generateNetworkTransferFunctions
 import generation.generator.generateStateClass
 import org.reflections.util.ClasspathHelper
+import java.lang.reflect.Modifier
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -65,7 +66,7 @@ fun main() {
     }
 }
 
-private fun <T: Annotation> loadTypeDescsByAnnotatiton(annotation: Class<T>): List<TypeDesc> {
+private fun <T : Annotation> loadTypeDescsByAnnotatiton(annotation: Class<T>): List<TypeDesc> {
     val stateDefs = getAllAnnotatedTypes(
         annotation,
         ClasspathHelper.forPackage("state")
@@ -76,9 +77,11 @@ private fun <T: Annotation> loadTypeDescsByAnnotatiton(annotation: Class<T>): Li
     stateDefs.forEach { typeDef ->
         val superclass = typeDef.clazz.superclass
         if (superclass != Object::class.java) {
-            val parent = stateDefs.find { it.clazz == superclass } ?: error(
+            val parent = stateDefs.find { it.clazz == superclass }
+
+            check(parent != null || Modifier.isAbstract(superclass.modifiers)) {
                 "Parent ${superclass.simpleName} of ${typeDef.clazz.simpleName} should be annotated"
-            )
+            }
             typeDef.parent = parent
         }
     }

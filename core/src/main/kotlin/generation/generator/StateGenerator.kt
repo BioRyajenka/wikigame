@@ -63,7 +63,7 @@ fun generateStateClass(typeDef: TypeDesc): TypeSpec {
             }
 
             if (typeDef.parent != null) {
-                builder.superclass(stateClassName(typeDef.clazz.superclass))
+                builder.superclass(stateClassName(typeDef.parent!!.clazz))
                 val superConstructorArgs = typeDef.parent!!.constructorArguments
                 builder.addSuperclassConstructorParameter(superConstructorArgs.joinToString { it.name })
             }

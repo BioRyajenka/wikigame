@@ -1,9 +1,9 @@
-    package network
+package network
 
+import EMPTY_DIFF_GENERATOR
 import mutableDropWhile
-import state.GameState
-import state.GameStateDiff
-import state.MapState
+import state.gen.GameState
+import state.gen.GameStateDiff
 
 /**
  * Store some amount of unacknowledged diffs and current unsent and thus unacknowledged diff.
@@ -15,12 +15,8 @@ import state.MapState
  *       affected by event
  */
 
-val EMPTY_STATE_GENERATOR = {
-    GameState(emptyMap(), MapState(emptyMap()))
-}
-
-class ClientDiffsMechanism(val globalGameState: GameState) {
-    private var sentUnapprovedDiffs = mutableListOf<Pair<GameState, Int>>()
+class ClientDiffsMechanism(private val globalGameState: GameState) {
+    private var sentUnapprovedDiffs: MutableList<Pair<GameStateDiff, Int>> = mutableListOf()
     private var currentDiff: GameStateDiff? = null
     private var freeDiffId: Int = 0
 
@@ -45,7 +41,7 @@ class ClientDiffsMechanism(val globalGameState: GameState) {
     }
 
     fun apply(diffModification: (GameStateDiff) -> Unit) {
-        currentDiff = currentDiff ?: EMPTY_STATE_GENERATOR()
+        currentDiff = currentDiff ?: EMPTY_DIFF_GENERATOR()
         diffModification.invoke(currentDiff!!)
     }
 }
