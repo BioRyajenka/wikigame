@@ -1,6 +1,6 @@
 package network
 
-import EMPTY_DIFF_GENERATOR
+import EMPTY_GAMESTATE_DIFF_GENERATOR
 import mutableDropWhile
 import state.gen.GameState
 import state.gen.GameStateDiff
@@ -41,7 +41,7 @@ class ClientDiffsMechanism(private val globalGameState: GameState) {
     }
 
     fun apply(diffModification: (GameStateDiff) -> Unit) {
-        currentDiff = currentDiff ?: EMPTY_DIFF_GENERATOR()
+        currentDiff = currentDiff ?: EMPTY_GAMESTATE_DIFF_GENERATOR()
         diffModification.invoke(currentDiff!!)
     }
 }

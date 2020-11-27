@@ -26,6 +26,9 @@ internal fun writeVariableWithEmptyValue(obj: Any, packet: RakNetPacket) {
 
 internal fun <T> readVariableWithEmptyValue(packet: RakNetPacket): VariableWithEmptyValue<T> {
     val className = packet.readString()
+    // TODO: can improve performance by removing casts
+    //  (by turning generated code into Action's (or any Transferable) method)
+    //  so, Transferable should be interface?
     @Suppress("UNCHECKED_CAST")
     val obj = allInnerFunctions.getValue("read$className").call(packet) as T
     return VariableWithEmptyValue.ofValue(obj)

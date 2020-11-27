@@ -11,7 +11,7 @@ class GameStateDiffEvent(val diff: GameStateDiff, val diffId: Int) : NetworkEven
         val diff = readGameStateDiff(packet)
         val diffId = packet.readInt()
         GameStateDiffEvent(diff, diffId)
-    })
+    }, "GameStateDiffEvent")
 
     override fun write(packet: RakNetPacket) {
         writeGameStateDiff(diff, packet)

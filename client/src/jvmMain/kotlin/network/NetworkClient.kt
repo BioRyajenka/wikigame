@@ -54,10 +54,14 @@ class NetworkClient : RakNetClientListener {
 
     override fun onLogin(client: RakNetClient, peer: RakNetServerPeer) {
         println("logged in")
+        peer.timeout = 1000_000_000_000L
     }
 
     override fun handleMessage(client: RakNetClient, peer: RakNetServerPeer, packet: RakNetPacket, channel: Int) {
-        val event = NetworkEventManager.resolveEvent(packet) ?: error("")
+        peer.timeout = 1000_000_000_000L
+        val event = NetworkEventManager.resolveEvent(packet) ?: error(
+            "Event with ${packet.id} is not registered. Maybe forgot to add it to initialization?"
+        )
 
         awaiters.removeIf { it(event) }
     }

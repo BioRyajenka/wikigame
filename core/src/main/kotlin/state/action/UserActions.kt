@@ -1,38 +1,41 @@
 package state.action
 
 import generation.TransferableViaNetwork
-import state.*
 import mu.KotlinLogging
-import state.gen.*
+import state.*
+import state.gen.GameStateDiff
+import state.gen.ImmutableGameState
+import state.gen.ImmutablePlayerState
+import state.gen.PlayerStateDiff
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Возможны 2 варианта реализации сетевого протокола, я выбрал второй
- * 1) как в quake: для каждого клиента храним n версий всего мира, которые
- *    используются в ClientDiffsMechanism. При этом Action применяется один
- *    раз ко всему миру, а сужение и создание дифа происходят перед отправкой
- * 2) храним именно отправленные дифы. При этом Action возвращает сразу Diff
- *    (или модифицирующую дифф функцию, что одно и то же), и в качестве параметра
- *    принимает global immutable. Тогда сужение происходит прямо в функции
- *    применения UserAction. Сейчас я реализую с явными проверками в коде, но
- *    в идеале надо рассматривать все поля стейт-дифа как ресурсы и предоставлять
- *    или не предоставлять к ним доступ. Т.е. если нет доступа, то дифф не меняем
+ * Храним именно отправленные дифы. При этом Action возвращает сразу Diff
+ * (или модифицирующую дифф функцию, что одно и то же), и в качестве параметра
+ * принимает global immutable. Тогда сужение происходит прямо в функции
+ * применения UserAction. Сейчас я реализую с явными проверками в коде, но
+ * в идеале надо рассматривать все поля стейт-дифа как ресурсы и предоставлять
+ * или не предоставлять к ним доступ. Т.е. если нет доступа, то дифф не меняем
  *
- *    Это также имеет смысл чтобы валидировать что поля дифа не обнуляются (такое невалидно)
- *    Типа если было diff.a = smth, то нельзя его делать null
+ * Это также имеет смысл чтобы валидировать что поля дифа не обнуляются (такое невалидно)
+ * Типа если было diff.a = smth, то нельзя его делать null
+ *
+ * А еще это имеет смысл чтобы автоматически расширять дифф: если у юзера есть доступ
+ * к ресурсу И сейчас поле null, то берем значение из глобала
  */
 
 sealed class UserAction {
-    abstract val actionId: Int // incrementing id. todo: make it autoincrement
     abstract var aroseAtTime: Millis
 
     interface AppGlobalHelper {
         val initiatorGlobal: ImmutablePlayerState
     }
 
-    interface AppDiffHelper {
-        val initiator: PlayerStateDiff
+    interface  AppDiffHelper {
+        var nullableInitiator: PlayerStateDiff?
+
+        val notNullInitiator: PlayerStateDiff
     }
 
     /**
@@ -56,13 +59,30 @@ sealed class UserAction {
 private fun createGlobalHelper(globalState: ImmutableGameState, initiatorId: String): UserAction.AppGlobalHelper {
     return object : UserAction.AppGlobalHelper {
         // by lazy {
-        override val initiatorGlobal = globalState.entities[initiatorId] as ImmutablePlayerState
+        override val initiatorGlobal = globalState.getPlayer(initiatorId)
     }
 }
 
 private fun createDiffHelper(diff: GameStateDiff, initiatorId: String): UserAction.AppDiffHelper {
     return object : UserAction.AppDiffHelper {
-        override val initiator = diff.entities[initiatorId] as PlayerStateDiff
+        override var nullableInitiator = diff.getPlayer(initiatorId)
+            set(value) {
+                check(field == null) {
+                    "Resetting this field is not allowed"
+                }
+                field = value
+                diff.entities[initiatorId] = value
+            }
+        override val notNullInitiator: PlayerStateDiff
+            get() {
+                if (nullableInitiator == null) {
+                    nullableInitiator = PlayerStateDiff(
+                        initiatorId, null, null,
+                        null, null, null
+                    )
+                }
+                return nullableInitiator!!
+            }
     }
 }
 
@@ -75,17 +95,16 @@ private fun createDiffHelper(diff: GameStateDiff, initiatorId: String): UserActi
 sealed class ActiveUserAction : UserAction() {
     final override fun AppGlobalHelper.getApplication(): AppDiffHelper.() -> Unit {
         val onCancelOrFinishApp = if (!initiatorGlobal.activeAction.empty()) {
-            initiatorGlobal.activeAction.getValue()!!.getOnCancelOrFinish(this)
+            with(initiatorGlobal.activeAction.getValue()!!) { getOnCancelOrFinish() }
         } else null
 
         val onAttachApp = getOnAttach()
 
         return {
-            // 1. cancel current action
             onCancelOrFinishApp?.invoke(this)
 
             // 2. starting new
-            initiator.activeAction = VariableWithEmptyValue.ofValue(this@ActiveUserAction)
+            notNullInitiator.activeAction = VariableWithEmptyValue.ofValue(this@ActiveUserAction)
             onAttachApp()
         }
     }
@@ -94,34 +113,29 @@ sealed class ActiveUserAction : UserAction() {
      * Action is guaranteed to be not cancelled when calling these functions
      */
     protected abstract fun AppGlobalHelper.getOnAttach(): AppDiffHelper.() -> Unit
-    protected abstract fun getOnCancelOrFinish(gHelper: AppGlobalHelper): AppDiffHelper.() -> Unit
+    protected abstract fun AppGlobalHelper.getOnCancelOrFinish(): AppDiffHelper.() -> Unit
 
     fun getOnCancelOrFinish(globalState: ImmutableGameState, initiatorId: String): (GameStateDiff) -> Unit {
         val gHelper = createGlobalHelper(globalState, initiatorId)
         return { diff ->
             val dHelper = createDiffHelper(diff, initiatorId)
-            val application = getOnCancelOrFinish(gHelper)
+            val application = with(gHelper) { getOnCancelOrFinish() }
             dHelper.application()
         }
     }
 }
 
 @TransferableViaNetwork
-class CancelActiveAction(
-    override val actionId: Int, override var aroseAtTime: Millis
-) : UserAction() {
+class CancelActiveAction(override var aroseAtTime: Millis) : UserAction() {
     override fun AppGlobalHelper.getApplication(): AppDiffHelper.() -> Unit = {
-        initiator.activeAction = VariableWithEmptyValue.empty()
+        notNullInitiator.activeAction = VariableWithEmptyValue.empty()
     }
 }
 
 // represents movement with constant speed (if speed changes, need another Move event)
 // if movement distance is large, also need another Move event
 @TransferableViaNetwork
-class Move(
-    override val actionId: Int, override var aroseAtTime: Millis,
-    val endPosition: Position
-) : ActiveUserAction() {
+class Move(override var aroseAtTime: Millis, val endPosition: Position) : ActiveUserAction() {
     companion object {
         private fun calculateNewPosition(startPosition: Position, endPosition: Position, speed: Speed, elapsedTime: Millis): Vector {
             check(elapsedTime >= 0)
@@ -136,11 +150,11 @@ class Move(
 
     override fun AppGlobalHelper.getOnAttach(): AppDiffHelper.() -> Unit {
         return {
-            initiator.activeAction = VariableWithEmptyValue.ofValue(this@Move)
+            notNullInitiator.activeAction = VariableWithEmptyValue.ofValue(this@Move)
         }
     }
 
-    override fun getOnCancelOrFinish(gHelper: AppGlobalHelper): AppDiffHelper.() -> Unit = with(gHelper) {
+    override fun AppGlobalHelper.getOnCancelOrFinish(): AppDiffHelper.() -> Unit {
         val previousInitiatorAction = initiatorGlobal.activeAction.getValue()
         val newPos = if (previousInitiatorAction is Move) {
             calculateNewPosition(
@@ -152,7 +166,7 @@ class Move(
         } else null
 
         return {
-            if (newPos != null) initiator.position = newPos
+            if (newPos != null) notNullInitiator.position = newPos
         }
     }
 }

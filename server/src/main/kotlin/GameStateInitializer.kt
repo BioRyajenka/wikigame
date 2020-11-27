@@ -9,12 +9,12 @@ import state.entity.User
 import state.gen.*
 import kotlin.properties.Delegates
 
-val EMPTY_DIFF_GENERATOR = {
+val EMPTY_GAMESTATE_DIFF_GENERATOR = {
     GameStateDiff(mutableMapOf(), null)
 }
 
 operator fun ((GameStateDiff) -> Unit).invoke(gameState: GameState) {
-    val tempDiff = EMPTY_DIFF_GENERATOR()
+    val tempDiff = EMPTY_GAMESTATE_DIFF_GENERATOR()
     invoke(tempDiff)
     gameState.plusAssign(tempDiff)
 }

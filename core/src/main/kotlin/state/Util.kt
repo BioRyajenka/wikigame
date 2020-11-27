@@ -72,6 +72,12 @@ open class Vector(open var x: Dimension, open var y: Dimension) {
         y -= rhs.y
     }
 
+    fun copy(modifier: Vector.() -> Unit): Vector {
+        val copy = Vector(x, y)
+        copy.modifier()
+        return copy
+    }
+
     fun vectorLength(): Float = sqrt(x * x + y * y)
 }
 

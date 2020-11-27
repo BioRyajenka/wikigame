@@ -3,14 +3,14 @@ package network.protocol
 import com.whirvis.jraknet.RakNetPacket
 
 object NetworkEventManager {
-    private val events = mutableMapOf<Short, (RakNetPacket) -> NetworkEvent>()
+    private val events = mutableMapOf<Short, Pair<(RakNetPacket) -> NetworkEvent, String>>()
 
-    fun registerNewEventType(id: Short, eventConstructor: (RakNetPacket) -> NetworkEvent) {
-        events += id to eventConstructor
+    fun registerNewEventType(id: Short, nameForDebug: String, eventConstructor: (RakNetPacket) -> NetworkEvent) {
+        events += id to (eventConstructor to nameForDebug)
     }
 
     fun resolveEvent(packet: RakNetPacket): NetworkEvent? {
-        return events[packet.id]?.invoke(packet)
+        return events[packet.id]?.first?.invoke(packet)
     }
 }
 
@@ -45,11 +45,11 @@ abstract class NetworkEvent {
 
 private var freeId: Short = 150 //RakNetPacket.ID_USER_PACKET_ENUM
 
-open class NetworkEventCompanion(read: (RakNetPacket) -> NetworkEvent) {
+open class NetworkEventCompanion(read: (RakNetPacket) -> NetworkEvent, nameForDebug: String) {
     val eventId = freeId++
 
     init {
-        NetworkEventManager.registerNewEventType(eventId, read)
+        NetworkEventManager.registerNewEventType(eventId, nameForDebug, read)
     }
 }
 

@@ -8,11 +8,12 @@ import network.protocol.JoinWorldResponse
 import network.protocol.NetworkEvent
 import state.Hertz
 import state.Millis
+import state.action.Move
 import state.action.UserAction
 import state.gen.GameState
-import state.gen.GameStateDiff
 import state.gen.PlayerState
 import state.gen.PlayerStateDiff
+import state.getPlayer
 
 /**
 ) дифы могут реализовывать операцию +
@@ -45,7 +46,6 @@ private fun constrictGameState(gameState: GameState, playerId: String): GameStat
 }
 
 private fun filterAffectedPlayers(event: UserAction, clients: Collection<Client>): Collection<Client> {
-    // FIXME: 21.11.2020 it is temporary function. in future it will be implemented more efficiently
     return clients // TODO
 }
 
@@ -62,10 +62,19 @@ class GameServer(
         server.addListener(this)
         server.start()
 
-        while (false) {
-            update()
-
+        while (true) {
             Thread.sleep(updatePeriod.toLong())
+
+            //deleteme
+//            if (clients.isNotEmpty()) {
+//                val (peer, client) = clients.entries.single()
+//                val player2 = globalGameState.getPlayer("player2")
+//                processUserAction("player2", Move(
+//                    TimeProvider.currentTime, player2.position.copy { x += 500 }
+//                ))
+//            }
+
+            update()
         }
     }
 
@@ -86,7 +95,8 @@ class GameServer(
 
         println("Client ${client.id} disconnected!")
 
-        val player = globalGameState.entities[client.id]!! as PlayerState
+        val player = globalGameState.getPlayer(client.id)
+
         val cancelOrFinishApplication =
             player.activeAction.getValue()?.getOnCancelOrFinish(globalGameState, player.id)
         cancelOrFinishApplication?.invoke(globalGameState)
@@ -108,39 +118,46 @@ class GameServer(
         val client = clients[peer] ?: error("Message from player who didn't join the world")
 
         if (event is UserAction) {
-            // TODO: align event.aroseAtTime to server time (correctly? with offset?)
-            event.aroseAtTime = TimeProvider.currentTime
-
-            // TODO: add player to every affected player's diff before action application
-
-            val initiator = globalGameState.entities[client.id]!! as PlayerState
-
-            val application = event.getApplication(initiator.id, globalGameState)
-            val affectedPlayerStates = filterAffectedPlayers(event, clients.values)
-
-            // propagate info
-            affectedPlayerStates.forEach { affectedPlayer ->
-                affectedPlayer.diffsMechanism.apply { affectedDiff ->
-                    if (client.id !in affectedDiff.entities) {
-                        affectedDiff.entities[initiator.id] = PlayerStateDiff(
-                            initiator.id,
-                            initiator.position,
-                            initiator.activeAction,
-                            initiator.speechState,
-                            null,
-                            initiator.publicInfo
-                        )
-                    }
-                }
-            }
-
-            application.invoke(globalGameState)
-            affectedPlayerStates.forEach { it.diffsMechanism.apply(application) }
+            processUserAction(client.id, event)
 
             return
         }
 
         error("Unknown packet received")
+    }
+
+    // TODO: "player logged in" action
+    private fun processUserAction(initiatorId: String, event: UserAction) {
+        // TODO: align event.aroseAtTime to server time (correctly? with offset?)
+        event.aroseAtTime = TimeProvider.currentTime
+
+        // TODO: add player to every affected player's diff before action application
+
+        val initiator = globalGameState.getPlayer(initiatorId)
+
+        val application = event.getApplication(initiator.id, globalGameState)
+        val affectedPlayerStates = filterAffectedPlayers(event, clients.values)
+
+        // propagate info
+        affectedPlayerStates.forEach { affectedPlayer ->
+            affectedPlayer.diffsMechanism.apply { affectedDiff ->
+                if (initiatorId !in affectedDiff.entities) {
+                    // TODO: propagate not every time when diff doesn't contain player,
+                    //       but strongly when we send player for the first time
+                    affectedDiff.entities[initiator.id] = PlayerStateDiff(
+                        initiator.id,
+                        initiator.position,
+                        initiator.activeAction,
+                        initiator.speechState,
+                        null,
+                        initiator.publicInfo
+                    )
+                }
+            }
+        }
+
+        application.invoke(globalGameState)
+        affectedPlayerStates.forEach { it.diffsMechanism.apply(application) }
     }
 }
 
