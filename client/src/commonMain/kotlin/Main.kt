@@ -5,6 +5,6 @@ import kotlin.coroutines.coroutineContext
 
 
 suspend fun main() {
-    async(coroutineContext) { NetworkEntry() }
-//    UIEntry()
+//    async(coroutineContext) { NetworkEntry() }
+    UIEntry()
 }

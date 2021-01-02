@@ -36,9 +36,12 @@ class VariableWithEmptyValue<out T> private constructor(private var value: T? = 
 
 typealias Dimension = Float
 
+fun Number.toDimension(): Dimension = this.toFloat()
+
 typealias Millis = Double
 
-typealias Hertz = Double
+val Int.hz: Millis
+    get() = 1000.0 / this
 
 /**
  * One dimension per milli
@@ -50,35 +53,33 @@ typealias Position = Vector
 @TransferableViaNetwork
 open class Vector(open var x: Dimension, open var y: Dimension) {
     constructor() : this(0f, 0f)
+    constructor(x: Number, y: Number) : this(x.toDimension(), y.toDimension())
 
     operator fun minus(rhs: Vector) = Vector(x - rhs.x, y - rhs.y)
 
     operator fun plus(rhs: Vector) = Vector(x + rhs.x, y + rhs.y)
 
-    operator fun div(rhs: Double) = Vector(x / rhs.toFloat(), y / rhs.toFloat())
+    operator fun div(rhs: Number) = Vector(x / rhs.toDimension(), y / rhs.toDimension())
 
-    operator fun div(rhs: Float) = Vector(x / rhs, y / rhs)
-
-    operator fun div(rhs: Int) = Vector(x / rhs, y / rhs)
-
-    operator fun times(rhs: Double) = Vector(x * rhs.toFloat(), y * rhs.toFloat())
-
-    operator fun times(rhs: Float) = Vector(x * rhs, y * rhs)
-
-    operator fun times(rhs: Int) = Vector(x * rhs, y * rhs)
+    operator fun times(rhs: Number) = Vector(x * rhs.toDimension(), y * rhs.toDimension())
 
     operator fun minusAssign(rhs: Vector) {
         x -= rhs.x
         y -= rhs.y
     }
 
-    fun copy(modifier: Vector.() -> Unit): Vector {
+    override fun toString(): String {
+        return "($x, $y)"
+    }
+
+    fun copy(modifier: (Vector.() -> Unit)? = null): Vector {
         val copy = Vector(x, y)
-        copy.modifier()
+        if (modifier != null) copy.modifier()
         return copy
     }
 
-    fun vectorLength(): Float = sqrt(x * x + y * y)
+    val vectorLength: Float
+        get() = sqrt(x * x + y * y)
 }
 
 @TransferableViaNetwork

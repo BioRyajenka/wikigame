@@ -6,12 +6,9 @@ import network.protocol.GameStateDiffEvent
 import network.protocol.JoinWorldRequest
 import network.protocol.JoinWorldResponse
 import network.protocol.NetworkEvent
-import state.Hertz
 import state.Millis
-import state.action.Move
 import state.action.UserAction
 import state.gen.GameState
-import state.gen.PlayerState
 import state.gen.PlayerStateDiff
 import state.getPlayer
 
@@ -51,9 +48,8 @@ private fun filterAffectedPlayers(event: UserAction, clients: Collection<Client>
 
 class GameServer(
     private val server: NetworkServer,
-    updateFrequency: Hertz
+    private val updatePeriod: Millis
 ) : ServerEventListener {
-    private val updatePeriod: Millis = 1000 / updateFrequency
     private val clients = mutableMapOf<ClientPeer, Client>()
     private val globalGameState: GameState = createInitialGameState()
 

@@ -27,3 +27,12 @@ fun GameState.getPlayer(playerId: String): PlayerState {
 fun ImmutableGameState.getPlayer(playerId: String): ImmutablePlayerState {
     return entities.getValue(playerId) as ImmutablePlayerState
 }
+
+var MobState.x: Dimension
+    get() = this.position.x
+    set(value) { this.position.x = value }
+
+
+var MobState.y: Dimension
+    get() = this.position.y
+    set(value) { this.position.y = value }

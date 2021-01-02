@@ -139,7 +139,7 @@ class Move(override var aroseAtTime: Millis, val endPosition: Position) : Active
     companion object {
         private fun calculateNewPosition(startPosition: Position, endPosition: Position, speed: Speed, elapsedTime: Millis): Vector {
             check(elapsedTime >= 0)
-            val expectedTime = (endPosition - startPosition).vectorLength() / speed
+            val expectedTime = (endPosition - startPosition).vectorLength / speed
             return if (expectedTime < elapsedTime) {
                 endPosition
             } else {
