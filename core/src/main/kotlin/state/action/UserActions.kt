@@ -111,7 +111,7 @@ sealed class ActiveUserAction : UserAction() {
     }
 
     /**
-     * Action is guaranteed to be not cancelled when calling these functions
+     * Action is guaranteed to be not cancelled yet when calling these functions
      */
     protected abstract fun AppGlobalHelper.getOnAttach(): AppDiffHelper.() -> Unit
     protected abstract fun AppGlobalHelper.getOnCancelOrFinish(currentTime: Millis): AppDiffHelper.() -> Unit

@@ -62,7 +62,7 @@ fun createInitialGameState(): GameState {
             Position(1f * playerPos.j * tileWidth, 1f * playerPos.i * tileHeight),
             VariableWithEmptyValue.empty(),
             VariableWithEmptyValue.empty(),
-            PersonalInfo(3f),
+            PersonalInfo(0.5f),
             User(playerId, playerName)
         )
     }

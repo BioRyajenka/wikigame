@@ -3,10 +3,7 @@ import network.ClientDiffsMechanism
 import network.ClientPeer
 import network.NetworkServer
 import network.ServerEventListener
-import network.protocol.GameStateDiffEvent
-import network.protocol.JoinWorldRequest
-import network.protocol.JoinWorldResponse
-import network.protocol.NetworkEvent
+import network.protocol.*
 import state.Millis
 import state.action.Move
 import state.action.UserAction
@@ -63,18 +60,15 @@ class GameServer(
         server.start()
 
         while (true) {
-            Thread.sleep(updatePeriod.toLong())
-
-            //deleteme
-//            if (clients.isNotEmpty()) {
-//                val (peer, client) = clients.entries.single()
-//                val player2 = globalGameState.getPlayer("player2")
-//                processUserAction("player2", Move(
-//                    TimeProvider.currentTime, player2.position.copy { x += 500 }
-//                ))
-//            }
-
+            val startTime = TimeProvider.currentTime
             update()
+            val elapsedTime = TimeProvider.currentTime - startTime
+            val timeToRest = updatePeriod - elapsedTime
+            if (timeToRest > 0) {
+                Thread.sleep(updatePeriod.toLong()) // TODO: maybe nano time? is it worth it?
+            } else {
+                logger.warn { "Can't keep up! Frame update took too much time: $elapsedTime" }
+            }
         }
     }
 
@@ -119,11 +113,12 @@ class GameServer(
 
         val client = clients[peer] ?: error("Message from player who didn't join the world")
 
-        if (event is UserAction) { // TODO: replace with id comparison
-            if (checkUserActionValidity(client.id, event)) {
-                processUserAction(client.id, event)
+        if (event is UserActionEvent) { // TODO: replace with id comparison
+            val action = event.event
+            if (checkUserActionValidity(client.id, action)) {
+                processUserAction(client.id, action)
             } else {
-                logger.warn { "User ${client.id} sent an invalid action $event" }
+                logger.warn { "User ${client.id} sent an invalid action $action" }
             }
 
             return

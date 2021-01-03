@@ -10,7 +10,7 @@ import network.protocol.NetworkEventManager
 import kotlinx.coroutines.CompletableDeferred
 import java.net.InetSocketAddress
 
-class NetworkClient : RakNetClientListener {
+class NetworkClient(private val eventListener: (NetworkEvent) -> Unit) : RakNetClientListener {
     private val client = RakNetClient()
 
     @PublishedApi
@@ -69,6 +69,8 @@ class NetworkClient : RakNetClientListener {
         )
 
         awaiters.removeIf { it(event) }
+
+        eventListener(event)
     }
 
     override fun handleUnknownMessage(client: RakNetClient, peer: RakNetServerPeer, packet: RakNetPacket, channel: Int) {

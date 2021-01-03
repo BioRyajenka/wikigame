@@ -1,7 +1,7 @@
 package network
 
-import EMPTY_GAMESTATE_DIFF_GENERATOR
 import mutableDropWhile
+import state.EMPTY_GAMESTATE_DIFF_GENERATOR
 import state.gen.GameState
 import state.gen.GameStateDiff
 

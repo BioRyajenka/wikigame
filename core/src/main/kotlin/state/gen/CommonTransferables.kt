@@ -7,29 +7,46 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.kotlinFunction
 
-private fun allInnerFunctionsInitializer(): Map<String, KFunction<*>> {
-    val selfRef = ::allInnerFunctionsInitializer
+private fun allTransferFunctionsInitializer(): Map<String, KFunction<*>> {
+    val selfRef = ::allTransferFunctionsInitializer
     val currentClass = selfRef.javaMethod!!.declaringClass
-    val classDefiningFunctions = currentClass.classLoader.loadClass("TransferableKt")
+    val classDefiningFunctions = currentClass.classLoader.loadClass("state.gen.TransferableKt")
     return classDefiningFunctions.methods.filter { Modifier.isStatic(it.modifiers) }.associate { method ->
         method.name to method!!.kotlinFunction!!
     }
 }
 
-private val allInnerFunctions = allInnerFunctionsInitializer()
+private val allTransferFunctions = allTransferFunctionsInitializer()
 
-internal fun writeVariableWithEmptyValue(obj: Any, packet: RakNetPacket) {
+internal fun writeArbitrary(obj: Any, packet: RakNetPacket) {
     val className = obj::class.simpleName!!
     packet.writeString(className)
-    allInnerFunctions.getValue("write$className").call(obj, packet)
+    allTransferFunctions.getValue("write$className").call(obj, packet)
 }
 
-internal fun <T> readVariableWithEmptyValue(packet: RakNetPacket): VariableWithEmptyValue<T> {
-    val className = packet.readString()
+internal fun <T> readArbitrary(packet: RakNetPacket, className: String? = null): T {
+    val realClassName = className ?: packet.readString()
+
     // TODO: can improve performance by removing casts
     //  (by turning generated code into Action's (or any Transferable) method)
     //  so, Transferable should be interface?
     @Suppress("UNCHECKED_CAST")
-    val obj = allInnerFunctions.getValue("read$className").call(packet) as T
-    return VariableWithEmptyValue.ofValue(obj)
+    return allTransferFunctions.getValue("read$realClassName").call(packet) as T
+}
+
+internal fun <T> writeVariableWithEmptyValue(obj: VariableWithEmptyValue<T>, packet: RakNetPacket) {
+    if (obj.empty()) {
+        packet.writeString("null")
+    } else {
+        writeArbitrary(obj.getValue()!!, packet)
+    }
+}
+
+internal fun <T> readVariableWithEmptyValue(packet: RakNetPacket): VariableWithEmptyValue<T> {
+    val className = packet.readString()
+    return if (className == "null") {
+        VariableWithEmptyValue.empty()
+    } else {
+        VariableWithEmptyValue.ofValue(readArbitrary(packet, className))
+    }
 }

@@ -14,7 +14,7 @@ class UIEntry(
     private lateinit var loadingScreen: LoadingScreen
     private lateinit var gameWorld: GameWorld
 
-    suspend fun init(callback: () -> Unit) {
+    suspend fun init(callback: suspend () -> Unit) {
         Korge(width = WIDTH, height = HEIGHT, targetFps = 60.0, debug = false) {
             loadingScreen = LoadingScreen(WIDTH, HEIGHT)
             addChild(loadingScreen)

@@ -3,11 +3,13 @@ package network
 import network.protocol.GameStateDiffEvent
 import network.protocol.JoinWorldRequest
 import network.protocol.JoinWorldResponse
+import network.protocol.UserActionEvent
 
 fun initializeNetworkEvents() {
     JoinWorldRequest
     JoinWorldResponse
     GameStateDiffEvent
+    UserActionEvent
 }
 
 /*
