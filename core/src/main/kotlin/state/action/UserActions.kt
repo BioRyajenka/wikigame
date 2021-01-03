@@ -3,10 +3,7 @@ package state.action
 import generation.TransferableViaNetwork
 import mu.KotlinLogging
 import state.*
-import state.gen.GameStateDiff
-import state.gen.ImmutableGameState
-import state.gen.ImmutablePlayerState
-import state.gen.PlayerStateDiff
+import state.gen.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -32,7 +29,7 @@ sealed class UserAction {
         val initiatorGlobal: ImmutablePlayerState
     }
 
-    interface  AppDiffHelper {
+    interface AppDiffHelper {
         var nullableInitiator: PlayerStateDiff?
 
         val notNullInitiator: PlayerStateDiff
@@ -56,22 +53,24 @@ sealed class UserAction {
     abstract fun AppGlobalHelper.getApplication(): AppDiffHelper.() -> Unit
 }
 
-private fun createGlobalHelper(globalState: ImmutableGameState, initiatorId: String): UserAction.AppGlobalHelper {
+private fun createGlobalHelper(
+    globalState: ImmutableGameState,
+    initiatorId: String,
+): UserAction.AppGlobalHelper {
     return object : UserAction.AppGlobalHelper {
-        // by lazy {
-        override val initiatorGlobal = globalState.getPlayer(initiatorId)
+        override val initiatorGlobal = globalState.players[initiatorId]!!
     }
 }
 
 private fun createDiffHelper(diff: GameStateDiff, initiatorId: String): UserAction.AppDiffHelper {
     return object : UserAction.AppDiffHelper {
-        override var nullableInitiator = diff.getPlayer(initiatorId)
+        override var nullableInitiator = diff.players[initiatorId]
             set(value) {
                 check(field == null) {
                     "Resetting this field is not allowed"
                 }
                 field = value
-                diff.entities[initiatorId] = value
+                diff.players[initiatorId] = value
             }
         override val notNullInitiator: PlayerStateDiff
             get() {
@@ -95,7 +94,9 @@ private fun createDiffHelper(diff: GameStateDiff, initiatorId: String): UserActi
 sealed class ActiveUserAction : UserAction() {
     final override fun AppGlobalHelper.getApplication(): AppDiffHelper.() -> Unit {
         val onCancelOrFinishApp = if (!initiatorGlobal.activeAction.empty()) {
-            with(initiatorGlobal.activeAction.getValue()!!) { getOnCancelOrFinish() }
+            with(initiatorGlobal.activeAction.getValue()!!) {
+                getOnCancelOrFinish(this@ActiveUserAction.aroseAtTime)
+            }
         } else null
 
         val onAttachApp = getOnAttach()
@@ -113,13 +114,13 @@ sealed class ActiveUserAction : UserAction() {
      * Action is guaranteed to be not cancelled when calling these functions
      */
     protected abstract fun AppGlobalHelper.getOnAttach(): AppDiffHelper.() -> Unit
-    protected abstract fun AppGlobalHelper.getOnCancelOrFinish(): AppDiffHelper.() -> Unit
+    protected abstract fun AppGlobalHelper.getOnCancelOrFinish(currentTime: Millis): AppDiffHelper.() -> Unit
 
-    fun getOnCancelOrFinish(globalState: ImmutableGameState, initiatorId: String): (GameStateDiff) -> Unit {
+    fun getOnCancelOrFinish(globalState: ImmutableGameState, initiatorId: String, currentTime: Millis): (GameStateDiff) -> Unit {
         val gHelper = createGlobalHelper(globalState, initiatorId)
         return { diff ->
             val dHelper = createDiffHelper(diff, initiatorId)
-            val application = with(gHelper) { getOnCancelOrFinish() }
+            val application = with(gHelper) { getOnCancelOrFinish(currentTime) }
             dHelper.application()
         }
     }
@@ -135,34 +136,32 @@ class CancelActiveAction(override var aroseAtTime: Millis) : UserAction() {
 // represents movement with constant speed (if speed changes, need another Move event)
 // if movement distance is large, also need another Move event
 @TransferableViaNetwork
-class Move(override var aroseAtTime: Millis, val endPosition: Position) : ActiveUserAction() {
-    companion object {
-        private fun calculateNewPosition(startPosition: Position, endPosition: Position, speed: Speed, elapsedTime: Millis): Vector {
-            check(elapsedTime >= 0)
-            val expectedTime = (endPosition - startPosition).vectorLength / speed
-            return if (expectedTime < elapsedTime) {
-                endPosition
-            } else {
-                startPosition + (endPosition - startPosition) * (elapsedTime / expectedTime)
-            }
+class Move(override var aroseAtTime: Millis, val speed: Speed, val endPosition: Position) : ActiveUserAction() {
+
+    fun calculateNewPosition(player: ImmutableMobState, currentTime: Millis): Vector {
+        val startPosition = player.position
+        val elapsedTime = currentTime - aroseAtTime
+
+        check(elapsedTime >= 0)
+        val expectedTime = (endPosition - startPosition).vectorLength / speed
+        return if (expectedTime < elapsedTime) {
+            endPosition
+        } else {
+            startPosition + (endPosition - startPosition) * (elapsedTime / expectedTime)
         }
     }
 
     override fun AppGlobalHelper.getOnAttach(): AppDiffHelper.() -> Unit {
         return {
-            notNullInitiator.activeAction = VariableWithEmptyValue.ofValue(this@Move)
+            // do nothing - active action already attached
+            1 == 1 // for debug
         }
     }
 
-    override fun AppGlobalHelper.getOnCancelOrFinish(): AppDiffHelper.() -> Unit {
+    override fun AppGlobalHelper.getOnCancelOrFinish(currentTime: Millis): AppDiffHelper.() -> Unit {
         val previousInitiatorAction = initiatorGlobal.activeAction.getValue()
         val newPos = if (previousInitiatorAction is Move) {
-            calculateNewPosition(
-                initiatorGlobal.position,
-                endPosition,
-                initiatorGlobal.personalInfo.movementSpeed,
-                aroseAtTime - previousInitiatorAction.aroseAtTime
-            )
+            previousInitiatorAction.calculateNewPosition(initiatorGlobal, currentTime)
         } else null
 
         return {

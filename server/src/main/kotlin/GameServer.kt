@@ -1,3 +1,4 @@
+import mu.KotlinLogging
 import network.ClientDiffsMechanism
 import network.ClientPeer
 import network.NetworkServer
@@ -7,10 +8,11 @@ import network.protocol.JoinWorldRequest
 import network.protocol.JoinWorldResponse
 import network.protocol.NetworkEvent
 import state.Millis
+import state.action.Move
 import state.action.UserAction
 import state.gen.GameState
 import state.gen.PlayerStateDiff
-import state.getPlayer
+import state.invoke
 
 /**
 ) дифы могут реализовывать операцию +
@@ -37,6 +39,8 @@ import state.getPlayer
 
 Diff это отдельная сущность или та же? Предпочтительно та же
  */
+
+private val logger = KotlinLogging.logger {}
 
 private fun constrictGameState(gameState: GameState, playerId: String): GameState {
     return gameState // TODO
@@ -91,10 +95,12 @@ class GameServer(
 
         println("Client ${client.id} disconnected!")
 
-        val player = globalGameState.getPlayer(client.id)
+        val player = globalGameState.players[client.id]!!
+        val disconnectingTime = TimeProvider.currentTime
 
-        val cancelOrFinishApplication =
-            player.activeAction.getValue()?.getOnCancelOrFinish(globalGameState, player.id)
+        val cancelOrFinishApplication = player.activeAction.getValue()?.getOnCancelOrFinish(
+            globalGameState, player.id, disconnectingTime
+        )
         cancelOrFinishApplication?.invoke(globalGameState)
     }
 
@@ -113,13 +119,34 @@ class GameServer(
 
         val client = clients[peer] ?: error("Message from player who didn't join the world")
 
-        if (event is UserAction) {
-            processUserAction(client.id, event)
+        if (event is UserAction) { // TODO: replace with id comparison
+            if (checkUserActionValidity(client.id, event)) {
+                processUserAction(client.id, event)
+            } else {
+                logger.warn { "User ${client.id} sent an invalid action $event" }
+            }
 
             return
         }
 
         error("Unknown packet received")
+    }
+
+    private fun checkUserActionValidity(initiatorId: String, event: UserAction): Boolean {
+        val initiator = globalGameState.players[initiatorId]!!
+
+        when (event) {
+            is Move -> {
+                // TODO: maybe eps comparison?
+                if (initiator.personalInfo.movementSpeed != event.speed) {
+                    return false
+                }
+                //  Move event не должен быть на слишком большую дистанцию
+                //  (не больше скольки-то игровых экранов)
+            }
+        }
+
+        return true
     }
 
     // TODO: "player logged in" action
@@ -129,7 +156,7 @@ class GameServer(
 
         // TODO: add player to every affected player's diff before action application
 
-        val initiator = globalGameState.getPlayer(initiatorId)
+        val initiator = globalGameState.players[initiatorId]!!
 
         val application = event.getApplication(initiator.id, globalGameState)
         val affectedPlayerStates = filterAffectedPlayers(event, clients.values)
@@ -137,10 +164,10 @@ class GameServer(
         // propagate info
         affectedPlayerStates.forEach { affectedPlayer ->
             affectedPlayer.diffsMechanism.apply { affectedDiff ->
-                if (initiatorId !in affectedDiff.entities) {
+                if (initiatorId !in affectedDiff.players) {
                     // TODO: propagate not every time when diff doesn't contain player,
                     //       but strongly when we send player for the first time
-                    affectedDiff.entities[initiator.id] = PlayerStateDiff(
+                    affectedDiff.players[initiator.id] = PlayerStateDiff(
                         initiator.id,
                         initiator.position,
                         initiator.activeAction,

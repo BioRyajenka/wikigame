@@ -9,16 +9,6 @@ import state.entity.User
 import state.gen.*
 import kotlin.properties.Delegates
 
-val EMPTY_GAMESTATE_DIFF_GENERATOR = {
-    GameStateDiff(mutableMapOf(), null)
-}
-
-operator fun ((GameStateDiff) -> Unit).invoke(gameState: GameState) {
-    val tempDiff = EMPTY_GAMESTATE_DIFF_GENERATOR()
-    invoke(tempDiff)
-    gameState.plusAssign(tempDiff)
-}
-
 fun createInitialGameState(): GameState {
     var width: Int
     var height: Int
@@ -62,8 +52,8 @@ fun createInitialGameState(): GameState {
         IntPosition(5, 5),
         IntPosition(5, 15)
     )
-    val entities = mutableListOf<EntityState>()
-    entities += playersPos.mapIndexed { i, playerPos ->
+    val players = mutableListOf<PlayerState>()
+    players += playersPos.mapIndexed { i, playerPos ->
         val playerId = "player${i + 1}"
         val playerName = "Player ${i + 1}"
 
@@ -77,5 +67,10 @@ fun createInitialGameState(): GameState {
         )
     }
 
-    return GameState(entities.associateBy { it.id }.toMutableMap(), mapState)
+    return GameState(
+        mutableMapOf(),
+        mutableMapOf(),
+        players.associateBy { it.id }.toMutableMap(),
+        mapState
+    )
 }

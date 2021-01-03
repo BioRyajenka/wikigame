@@ -3,6 +3,8 @@ package state
 import generation.StateDef
 import mu.KotlinLogging
 import state.entity.EntityStateDef
+import state.entity.MobStateDef
+import state.entity.PlayerStateDef
 
 private val logger = KotlinLogging.logger {}
 
@@ -21,6 +23,8 @@ private val logger = KotlinLogging.logger {}
 @StateDef
 data class GameStateDef(
     val entities: Map<String, EntityStateDef>, // id is a key
+    val mobs: Map<String, MobStateDef>,
+    val players: Map<String, PlayerStateDef>,
     val mapState: MapStateDef,
 //    var time: Millis // the time this state describes
 )

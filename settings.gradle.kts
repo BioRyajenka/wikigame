@@ -9,3 +9,4 @@
 
 rootProject.name = "wikigame"
 include("core", "client", "server")
+//include("core-generation")

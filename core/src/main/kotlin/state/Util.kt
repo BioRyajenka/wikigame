@@ -25,6 +25,10 @@ class VariableWithEmptyValue<out T> private constructor(private var value: T? = 
 
     fun empty() = value == null
 
+    override fun toString(): String {
+        return if (empty()) "(empty)" else "($value)"
+    }
+
     companion object {
         private val EMPTY = VariableWithEmptyValue<Any>(null)
 

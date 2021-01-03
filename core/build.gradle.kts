@@ -38,5 +38,7 @@ dependencies {
     implementation("com.squareup:kotlinpoet:1.7.2")
     implementation("org.reflections:reflections:0.9.12")
 
+//    api(project(":core-generation"))
+
     testApi(group = "junit", name = "junit", version = "4.12")
 }

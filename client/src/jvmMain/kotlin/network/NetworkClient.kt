@@ -21,6 +21,11 @@ class NetworkClient : RakNetClientListener {
         client.addListener(this)
     }
 
+//    fun sendUnreliably(event: NetworkEvent) {
+//        todo: тут че?
+//        client.sendMessage(Reliability.UNRELIABLE, event.getPreparedPacket())
+//    }
+
     fun sendReliably(event: NetworkEvent) {
         client.sendMessage(Reliability.RELIABLE, event.getPreparedPacket())
     }
@@ -54,11 +59,11 @@ class NetworkClient : RakNetClientListener {
 
     override fun onLogin(client: RakNetClient, peer: RakNetServerPeer) {
         println("logged in")
-        peer.timeout = 1000_000_000_000L
+        peer.timeout = 1000_000_000_000L // for debug
     }
 
     override fun handleMessage(client: RakNetClient, peer: RakNetServerPeer, packet: RakNetPacket, channel: Int) {
-        peer.timeout = 1000_000_000_000L
+        peer.timeout = 1000_000_000_000L // for debug
         val event = NetworkEventManager.resolveEvent(packet) ?: error(
             "Event with ${packet.id} is not registered. Maybe forgot to add it to initialization?"
         )

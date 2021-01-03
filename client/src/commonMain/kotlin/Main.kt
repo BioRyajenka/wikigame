@@ -1,10 +1,2 @@
-import com.soywiz.korio.async.async
-import network.NetworkEntry
-import ui.UIEntry
-import kotlin.coroutines.coroutineContext
-
-
-suspend fun main() {
-//    async(coroutineContext) { NetworkEntry() }
-    UIEntry()
-}
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect suspend fun main()
